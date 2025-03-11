@@ -11,8 +11,7 @@ class CurrencyController extends Controller
 {
     public function __construct(
         protected CurrencyExchangeService $currencyExchangeService
-    ) {
-    }
+    ) {}
 
     /**
      * Обработка всех API запросов
