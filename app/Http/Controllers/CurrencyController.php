@@ -72,6 +72,8 @@ class CurrencyController extends Controller
 
         $result = $this->currencyExchangeService->convert($currencyFrom, $currencyTo, $value);
 
-        return $this->showResponse($result);
+        return $this->showResponse([
+            'data' => $result
+        ]);
     }
 }
