@@ -1,9 +1,5 @@
 <?php
 
-if (file_exists(dirname(__DIR__) . '/.env')) {
-    $dotenv = \Dotenv\Dotenv::createImmutable(dirname(__DIR__));
-    $dotenv->load();
-}
 
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
@@ -47,16 +43,20 @@ $config = [
             ],
         ],
         'db' => $db,
-        /*
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                'admin/orders' => 'admin/orders/index'
             ],
         ],
-        */
     ],
     'params' => $params,
+    'modules' => [
+        'admin' => [
+            'class' => 'app\modules\admin\Module',
+        ],
+    ],
 ];
 
 if (YII_ENV_DEV) {
