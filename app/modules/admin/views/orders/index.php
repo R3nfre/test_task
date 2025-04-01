@@ -2,31 +2,44 @@
 
 use app\modules\admin\models\Order;
 use yii\helpers\Url;
+use yii\widgets\LinkPager;
 
-$this->params = Yii::$app->request->getQueryParams();
 ?>
 
     <ul class="nav nav-tabs p-b">
-        <?php $currentStatus = Yii::$app->request->get('status');?>
+        <?php
+        $currentStatus = Yii::$app->request->get('status');
+        $params = Yii::$app->request->getQueryParams();
+        unset($params['service_id']);
+        unset($params['mode']);
+        unset($params['status']);
+        ?>
         <li class="<?= $currentStatus === null ? 'active' : '' ?>">
-            <a href="<?= Url::to(['/admin/orders']) ?>"><?= Yii::t('order', 'all') ?></a>
+            <a href="<?= Url::to(array_merge(['/admin/orders'], $params)) ?>"><?= Yii::t('order', 'all') ?></a>
         </li>
         <?php foreach (Order::getStatusList() as $orderStatusId => $orderStatusName) {
             $isActive = ($currentStatus !== null && $currentStatus == $orderStatusId);
-            $this->params['status'] = $orderStatusId;
+            $params = Yii::$app->request->getQueryParams();
+            $params['status'] = $orderStatusId;
+            unset($params['mode']);
+            unset($params['service_id']);
             ?>
-            <li class="<?= $isActive ? 'active' : '' ?>"><a href="<?= Url::to(array_merge(['/admin/orders'], $this->params)) ?>"><?= $orderStatusName ?></a></li>
+            <li class="<?= $isActive ? 'active' : '' ?>"><a href="<?=  Url::to(array_merge(['/admin/orders'], $params)) ?>"><?= $orderStatusName ?></a></li>
         <?php } ?>
         <li class="pull-right custom-search">
             <form class="form-inline" action="/admin/orders" method="get">
                 <div class="input-group">
-                    <input type="text" name="search" class="form-control" value="" placeholder="Search orders">
+                    <?php if($currentStatus){ ?>
+                        <input type="hidden" name="status" value="<?= $currentStatus ?>">
+                    <?php } ?>
+                    <?php $value = Yii::$app->request->get('search') ?? '' ?>
+                    <input type="text" name="search" class="form-control" value="<?= $value ?>" placeholder="<?= Yii::t('order', 'search_orders_name')?>">
                     <span class="input-group-btn search-select-wrap">
 
             <select class="form-control search-select" name="search-type">
-              <option value="1" selected="">Order ID</option>
-              <option value="2">Link</option>
-              <option value="3">Username</option>
+              <option value="id" selected=""><?= Yii::t('order', 'id_order_name')?></option>
+              <option value="link"><?= Yii::t('order', 'link_name')?></option>
+              <option value="name"><?= Yii::t('order', 'username_name')?></option>
             </select>
             <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
             </span>
@@ -37,47 +50,73 @@ $this->params = Yii::$app->request->getQueryParams();
     <table class="table order-table">
         <thead>
         <tr>
-            <th>ID</th>
-            <th>User</th>
-            <th>Link</th>
-            <th>Quantity</th>
+            <th><?= Yii::t('order', 'id_name')?> </th>
+            <th><?= Yii::t('order', 'user_name')?></th>
+            <th><?= Yii::t('order', 'link_name')?></th>
+            <th><?= Yii::t('order', 'quantity_name')?></th>
             <th class="dropdown-th">
                 <div class="dropdown">
                     <button class="btn btn-th btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                        Service
+                        <?= Yii::t('order', 'service_name')?>
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                        <li class="active"><a href="">All (<?=$pagination->totalCount?>)</a></li>
-                        <?php foreach ($servicesCount as $serviceName => $serviceCount){ ?>
+                        <?php
+                        $currentService = Yii::$app->request->get('service_id');
+                        $params = Yii::$app->request->getQueryParams();
+                        unset($params['service_id']);
+                        ?>
+                        <li class="<?= $currentService === null ? 'active' : '' ?>">
+                            <a href="<?=Url::to(array_merge(['/admin/orders'], $params))?>"><?= Yii::t('order', 'all').' ' ?> (<?=$totalCountWithoutSectionFilter?>)</a>
+                        </li>
+                        <?php foreach ($servicesCount as $serviceId => $serviceData){ ?>
                             <?php
-                            $class = $serviceCount === 0 ? 'disabled' : '';
-                            $url = $serviceCount === 0 ? 'javascript:void(0);' : '#';
+                            $params = Yii::$app->request->getQueryParams();
+                            $params['service_id'] = $serviceId;
+                            $isActive = ($currentService !== null && $currentService == $serviceId);
+                            $class = $serviceData['service_count'] === 0 ? 'disabled' : '';
+                            $class .= $isActive ? ' active' : '';
+                            $url = $serviceData['service_count'] === 0
+                                ? 'javascript:void(0);'
+                                : Url::to(array_merge(['/admin/orders'], $params));
                             ?>
                             <li class="<?= $class ?>">
                                 <a href="<?= $url ?>">
-                                    <span class="label-id"><?= $serviceCount ?></span> <?= $serviceName ?>
+                                    <span class="label-id"><?= $serviceData['service_count'] ?></span> <?= $serviceData['service_name'] ?>
                                 </a>
                             </li>
                         <?php } ?>
                     </ul>
                 </div>
             </th>
-            <th>Status</th>
+            <th><?= Yii::t('order', 'status_name') ?></th>
             <th class="dropdown-th">
                 <div class="dropdown">
                     <button class="btn btn-th btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                        Mode
+                        <?= Yii::t('order', 'mode_name') ?>
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                        <li class="active"><a href="">All</a></li>
-                        <li><a href="">Manual</a></li>
-                        <li><a href="">Auto</a></li>
+                        <?php
+                        $currentMode = Yii::$app->request->get('mode');
+                        $params = Yii::$app->request->getQueryParams();
+                        unset($params['mode']);
+                        ?>
+                        <li class="<?= $currentMode === null ? 'active' : '' ?>">
+                            <a href="<?= Url::to(array_merge(['/admin/orders'], $params)) ?>"><?= Yii::t('order', 'all') ?></a>
+                        </li>
+                        <?php foreach (Order::getModeList() as $orderModeId => $orderModeName){ ?>
+                            <?php
+                            $params = Yii::$app->request->getQueryParams();
+                            $params['mode'] = $orderModeId;
+                            $isActive = ($currentMode !== null && $currentMode == $orderModeId);
+                            ?>
+                            <li class="<?= $isActive ? 'active' : '' ?>"><a href="<?=  Url::to(array_merge(['/admin/orders'], $params)) ?>"><?= $orderModeName ?></a></li>
+                        <?php } ?>
                     </ul>
                 </div>
             </th>
-            <th>Created</th>
+            <th><?= Yii::t('order', 'created_name')?></th>
         </tr>
         </thead>
         <tbody>
@@ -88,37 +127,41 @@ $this->params = Yii::$app->request->getQueryParams();
             <td class="link"><?= $order->link ?></td>
             <td><?= $order->quantity ?></td>
             <td class="service">
-                <span class="label-id"><?= $servicesCount[$order->service->name]?></span><?= ' '.$order->service->name ?>
+                <span class="label-id"><?= $servicesCount[$order->service_id]['service_count']?></span><?= ' '.$order->service->name ?>
             </td>
             <td><?= $order->getStatusName() ?></td>
-            <td><?= $order->mode ?></td>
-            <td><span class="nowrap">2016-01-27</span><span class="nowrap">15:13:52</span></td>
+            <td><?= $order->getModeName() ?></td>
+            <td>
+                <span class="nowrap"><?= Yii::$app->formatter->asDate($order->created_at, 'php:Y-m-d')?></span>
+                <span class="nowrap"><?= Yii::$app->formatter->asTime($order->created_at, 'php:H:i:s')?></span>
+            </td>
         </tr>
         <?php } ?>
         </tbody>
     </table>
-    <div class="row">
-        <div class="col-sm-8">
-            <nav>
-                <ul class="pagination">
-                    <li class="disabled"><a href="" aria-label="Previous">&laquo;</a></li>
-                    <li class="active"><a href="">1</a></li>
-                    <li><a href="">2</a></li>
-                    <li><a href="">3</a></li>
-                    <li><a href="">4</a></li>
-                    <li><a href="">5</a></li>
-                    <li><a href="">6</a></li>
-                    <li><a href="">7</a></li>
-                    <li><a href="">8</a></li>
-                    <li><a href="">9</a></li>
-                    <li><a href="">10</a></li>
-                    <li><a href="" aria-label="Next">&raquo;</a></li>
-                </ul>
-            </nav>
-
-        </div>
-        <div class="col-sm-4 pagination-counters">
-            1 to 100 of <?= $pagination->totalCount ?>
-        </div>
-
+<div class="row">
+    <div class="col-sm-8">
+        <nav>
+            <?= LinkPager::widget([
+                'pagination' => $pagination,
+                'prevPageLabel' => '&laquo;',
+                'nextPageLabel' => '&raquo;',
+                'firstPageLabel' => 1,
+                'lastPageLabel' => $pagination->getPageCount(),
+                'maxButtonCount' => 10,
+                'options' => ['class' => 'pagination'],
+                'linkOptions' => ['class' => 'page-link'],
+                'disabledPageCssClass' => 'disabled',
+                'activePageCssClass' => 'active',
+            ]) ?>
+        </nav>
     </div>
+
+    <div class="col-sm-4 pagination-counters">
+        <?= Yii::t('order', 'pagination_text', [
+            'begin' => $pagination->offset + 1,
+            'end' => min($pagination->offset + $pagination->limit, $pagination->totalCount),
+            'total' => $pagination->totalCount
+        ]) ?>
+    </div>
+</div>

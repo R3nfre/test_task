@@ -13,25 +13,41 @@ class Order extends ActiveRecord
     const STATUS_CANCELED = 3;
     const STATUS_FAIL = 4;
 
+    const MODE_MANUAL = 0;
+    const MODE_AUTO = 1;
+
     public static function tableName()
     {
         return 'orders';
     }
 
-    public static function getStatusList()
+    public static function getStatusList(): array
     {
         return [
-            self::STATUS_PENDING => Yii::t('order', 'pending'),
-            self::STATUS_IN_PROGRESS => Yii::t('order', 'in_progress'),
-            self::STATUS_COMPLETED => Yii::t('order', 'completed'),
-            self::STATUS_CANCELED => Yii::t('order', 'canceled'),
-            self::STATUS_FAIL => Yii::t('order', 'fail'),
+            self::STATUS_PENDING => Yii::t('order', 'status_pending'),
+            self::STATUS_IN_PROGRESS => Yii::t('order', 'status_in_progress'),
+            self::STATUS_COMPLETED => Yii::t('order', 'status_completed'),
+            self::STATUS_CANCELED => Yii::t('order', 'status_canceled'),
+            self::STATUS_FAIL => Yii::t('order', 'status_fail'),
         ];
     }
 
     public function getStatusName()
     {
         return self::getStatusList()[$this->status] ?? Yii::t('orders', 'unknown');
+    }
+
+    public static function getModeList(): array
+    {
+        return [
+            self::MODE_MANUAL => Yii::t('order', 'mode_manual'),
+            self::MODE_AUTO => Yii::t('order', 'mode_auto'),
+        ];
+    }
+
+    public function getModeName()
+    {
+        return self::getModeList()[$this->mode] ?? Yii::t('order', 'unknown');
     }
 
     public function rules()
