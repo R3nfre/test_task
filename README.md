@@ -10,7 +10,8 @@
    ```bash
    cp .env.example .env
     ```
-2. Запустите makefile
+3. Запустите makefile
    ```bash
    make setup
    ```
+4. На все миграции вводите yes
