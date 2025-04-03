@@ -39,3 +39,5 @@ RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 775 /var/www/html/migrations
 
 EXPOSE 9000
+
+WORKDIR /var/www/html

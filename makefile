@@ -6,10 +6,9 @@ setup:
     		echo ".env already exists, skipping copy"; \
     	fi
 	docker-compose up -d
-	docker-compose exec cd app
-	docker-compose exec ln -s ../.env .env
-	docker-compose exec composer install
-	docker-compose cd ..
+	cd app
+	ln -s ../.env .env
+	docker-compose exec php composer update -d /var/www/html/app
 	docker-compose exec php app/yii migrate
 
 down:
