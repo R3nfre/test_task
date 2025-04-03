@@ -9,41 +9,20 @@ class m250328_084335_fill_database_data extends Migration
      */
     public function safeUp()
     {
-        $sqlDumpPath = Yii::getAlias('@app/migrations/test_db_data.sql');
+        ini_set('memory_limit', '256M');
 
-        if (!file_exists($sqlDumpPath)) {
-            throw new Exception("SQL dump file not found: $sqlDumpPath");
-        }
+        $sqlDumpPath = '@app/migrations/test_db_data.sql';
 
-        $handle = fopen($sqlDumpPath, 'r');
-        if ($handle === false) {
-            throw new Exception("Failed to open SQL dump file: $sqlDumpPath");
-        }
+        $sqlContent = file_get_contents(Yii::getAlias($sqlDumpPath));
 
-        $statement = '';
+        $sqlStatements = explode(';', $sqlContent);
 
-        while (($line = fgets($handle)) !== false) {
-            $line = trim($line);
-
-            if (empty($line) || strpos($line, '--') === 0 || strpos($line, '/*') === 0) {
-                continue;
-            }
-
-            $statement .= ' ' . $line;
-
-            if (substr($line, -1) === ';') {
+        foreach ($sqlStatements as $statement) {
+            $statement = trim($statement);
+            if (!empty($statement)) {
                 $this->execute($statement);
-                $statement = '';
-
-                gc_collect_cycles();
             }
         }
-
-        if (trim($statement) !== '') {
-            $this->execute($statement);
-        }
-
-        fclose($handle);
     }
 
     /**

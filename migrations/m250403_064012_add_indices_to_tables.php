@@ -1,7 +1,5 @@
 <?php
 
-namespace migrations;
-
 use yii\db\Migration;
 
 class m250403_064012_add_indices_to_tables extends Migration
