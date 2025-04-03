@@ -1,7 +1,8 @@
 <?php
 
-namespace app\modules\admin\models;
+namespace app\modules\admin\models\service;
 
+use app\modules\admin\models\order\Order;
 use yii\db\ActiveRecord;
 
 class Service extends ActiveRecord

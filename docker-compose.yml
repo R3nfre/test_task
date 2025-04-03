@@ -3,22 +3,28 @@ services:
   nginx:
     image: nginx:latest
     ports:
-      - "${NGINX_PORT}:${NGINX_PORT}"
+      - "${NGINX_PORT_HOST}:${NGINX_PORT_CONTAINER}"
     volumes:
-      - ./app:/var/www/html
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./app:/var/www/html/app
+      - ./migrations:/var/www/html/migrations
+      - ./.env:/var/www/html/.env
+      - ./docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template
     depends_on:
       - php
       - mysql
     networks:
       - yii2-network
+    env_file:
+      - .env
 
   php:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
     volumes:
-      - ./app:/var/www/html
+      - ./app:/var/www/html/app
+      - ./migrations:/var/www/html/migrations
+      - ./.env:/var/www/html/.env
     depends_on:
       - mysql
     networks:
@@ -26,13 +32,14 @@ services:
 
   mysql:
     image: mysql:8.0
+    container_name: mysql_test_task
     environment:
       MYSQL_ROOT_PASSWORD: root_password
     volumes:
       - mysql-data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "${MYSQL_PORT}:${MYSQL_PORT}"
+      - "${MYSQL_PORT_HOST}:${MYSQL_PORT_CONTAINER}"
     networks:
       - yii2-network
 

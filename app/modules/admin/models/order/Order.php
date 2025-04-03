@@ -1,8 +1,11 @@
 <?php
 
-namespace app\modules\admin\models;
+namespace app\modules\admin\models\order;
 
+use app\modules\admin\models\service\Service;
+use app\modules\admin\models\user\User;
 use Yii;
+use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
 class Order extends ActiveRecord
@@ -59,26 +62,12 @@ class Order extends ActiveRecord
         ];
     }
 
-    public function attributeLabels()
-    {
-        return [
-            'id' => 'ID',
-            'user_id' => 'User ID',
-            'link' => 'Link',
-            'quantity' => 'Quantity',
-            'service_id' => 'Service ID',
-            'status' => 'Status',
-            'created_at' => 'Created At',
-            'mode' => 'Mode',
-        ];
-    }
-
-    public function getUser()
+    public function getUser(): ActiveQuery
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 
-    public function getService()
+    public function getService(): ActiveQuery
     {
         return $this->hasOne(Service::class, ['id' => 'service_id']);
     }

@@ -29,14 +29,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Установка рабочей директории
 WORKDIR /var/www/html
 
-# Копирование файлов приложения
-COPY ../app .
+COPY ./app /var/www/html/app
+COPY ./migrations /var/www/html/migrations
 
-# Установка зависимостей Composer
+WORKDIR /var/www/html/app
 RUN composer install --no-interaction --no-plugins --no-scripts
 
-# Установка прав доступа
 RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 775 /var/www/html/migrations
 
-# Порт для PHP-FPM
 EXPOSE 9000
