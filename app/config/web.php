@@ -47,7 +47,12 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                'admin/orders/download-csv' => 'admin/orders/download-csv',
+
+                'admin/orders/<status:(pending|in_progress|completed|canceled|fail)>' => 'admin/orders/index',
+
                 'admin/orders' => 'admin/orders/index',
+
                 'admin/orders/<status:.*>' => 'admin/orders/index',
             ],
         ],
@@ -75,7 +80,7 @@ if (YII_ENV_DEV) {
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => 'yii\gii\Module',
-        'allowedIPs' => ['127.0.0.1', '::1', '192.168.1.*', 'XXX.XXX.XXX.XXX']
+
     ];
 }
 
