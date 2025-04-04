@@ -41,7 +41,7 @@ $this->beginPage() ?>
             </div>
             <div class="collapse navbar-collapse" id="bs-navbar-collapse">
                 <ul class="nav navbar-nav">
-                    <li class="active"><a href="#"><?= Yii::t('order', 'name')?></a></li>
+                    <li class="active"><a href="#"><?= Yii::t('order', 'page.header.name')?></a></li>
                 </ul>
             </div>
         </div>

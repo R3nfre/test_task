@@ -2,6 +2,8 @@
 
 namespace app\modules\admin\widgets\orders;
 
+use app\modules\admin\models\Orders;
+use app\modules\admin\models\search\OrdersSearch;
 use Yii;
 use yii\base\Widget;
 use yii\helpers\Html;
@@ -9,6 +11,11 @@ use yii\helpers\Url;
 
 class DropdownFilterWidget extends Widget
 {
+    /**
+     * @var OrdersSearch
+     */
+    public OrdersSearch $searchModel;
+
     /** @var array Параметры запроса */
     public $params = [];
 
@@ -38,6 +45,9 @@ class DropdownFilterWidget extends Widget
 
     public function run()
     {
+        $this->baseRoute .= $this->searchModel->status ? '/' . Orders::getStatusUrlKey($this->searchModel->status) : '';
+        $this->params = $this->searchModel->getFilteredAttributes();
+
         return $this->render($this->viewPath, [
             'title' => Html::encode($this->title),
             'allLinkHtml' => $this->renderAllLink(),
@@ -47,7 +57,7 @@ class DropdownFilterWidget extends Widget
 
     /**
      * Формирует HTML для пункта "Все"
-     *
+     *F
      * @return string
      */
     protected function renderAllLink(): string
@@ -57,7 +67,7 @@ class DropdownFilterWidget extends Widget
         $allActiveClass = $this->currentValue === null ? 'active' : '';
         $allUrl = Url::to(array_merge([$this->baseRoute], $this->params));
 
-        $allText = Yii::t('order', 'all');
+        $allText = Yii::t('order', 'model.order.status.all');
 
         if ($this->showCounts && $this->totalCount !== null) {
             $allText .= ' ' . Html::tag('span', "({$this->totalCount})");

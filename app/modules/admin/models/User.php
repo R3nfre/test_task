@@ -1,6 +1,6 @@
 <?php
 
-namespace app\modules\admin\models\user;
+namespace app\modules\admin\models;
 
 use yii\db\ActiveRecord;
 

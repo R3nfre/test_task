@@ -1,15 +1,14 @@
 <?php
 
-namespace app\modules\admin\models\order;
+namespace app\modules\admin\models\search;
 
+use app\modules\admin\models\Orders;
+use app\modules\admin\models\Service;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
 
-/**
- * OrderSearch - модель поиска для заказов
- */
-class OrderSearch extends Model
+class OrdersSearch extends Model
 {
     /**
      * Размер страницы для пагинации
@@ -19,31 +18,11 @@ class OrderSearch extends Model
     /**
      * @var string Статус заказа
      */
-    public $status;
-
-    /**
-     * @var string Режим заказа
-     */
     public $mode;
-
-    /**
-     * @var int ID сервиса
-     */
     public $service_id;
-
-    /**
-     * @var string Поисковый запрос
-     */
     public $search;
-
-    /**
-     * @var string Тип поиска (id, name, link)
-     */
     public $search_type;
-
-    /**
-     * @var ActiveQuery Запрос без фильтра по сервису
-     */
+    public $status;
     private $queryWithoutServiceFilter;
 
     /**
@@ -52,22 +31,138 @@ class OrderSearch extends Model
     public function rules()
     {
         return [
-            [['status', 'mode', 'search', 'search_type'], 'string'],
-            [['service_id'], 'integer'],
+            [['mode', 'service_id', 'status'], 'integer'],
+            [['search', 'search_type'], 'string'],
+
+            ['search', 'validateSearchPair'],
+            ['search_type', 'validateSearchPair'],
+
+            ['mode', 'in', 'range' => [Orders::MODE_MANUAL, Orders::MODE_AUTO]],
+
+            ['status', 'validateStatus'],
+
+            ['service_id', 'validateServiceId'],
         ];
     }
 
     /**
-     * Поиск заказов с примененными фильтрами
-     *
-     * @param array $params
+     * @param $data
+     * @param string|null $formName
+     * @return bool
+     */
+    public function load($data, $formName = ''): bool
+    {
+        $allParams = $formName === '' ? $data : $data[$formName] ?? [];
+
+        $result = parent::load($data, $formName);
+
+        if ($result) {
+            if (isset($allParams['status'])) {
+                $this->status = Orders::getStatusByUrlKey($allParams['status']);
+            }
+            $this->validateAttributes();
+        }
+
+        return $result;
+    }
+
+    protected function validateAttributes(): void
+    {
+        if (!$this->validateSearchPair()) {
+            $this->search = null;
+            $this->search_type = null;
+        }
+
+        if (!$this->validateMode()) {
+            $this->mode = null;
+        }
+
+        if (!$this->validateStatus()) {
+            $this->status = '';
+        }
+
+        if (!$this->validateServiceId()) {
+            $this->service_id = null;
+        }
+    }
+
+    protected function validateSearchPair(): bool
+    {
+        if ((empty($this->search) && !empty($this->search_type)) ||
+            (!empty($this->search) && empty($this->search_type))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function validateMode()
+    {
+        if ($this->mode === null) {
+            return true;
+        }
+
+        return in_array($this->mode, [Orders::MODE_MANUAL, Orders::MODE_AUTO]);
+    }
+
+    /**
+     * @return bool
+     */
+    protected function validateStatus(): bool
+    {
+        if ($this->status === null) {
+            return true;
+        }
+
+        $statusKeys = array_keys(Orders::getStatusUrlKeys());
+        return in_array($this->status, $statusKeys);
+    }
+
+    /**
+     * @return bool
+     */
+    protected function validateServiceId(): bool
+    {
+        if ($this->service_id === null) {
+            return true;
+        }
+
+        return Service::find()->where(['id' => $this->service_id])->exists();
+    }
+
+    /**
+     * @return array
+     */
+    public function getFilteredAttributes(): array
+    {
+        $result = [];
+
+        if ($this->mode !== null) {
+            $result['mode'] = $this->mode;
+        }
+
+        if ($this->service_id !== null) {
+            $result['service_id'] = $this->service_id;
+        }
+
+        if ($this->search !== null && $this->search_type !== null) {
+            $result['search'] = $this->search;
+            $result['search_type'] = $this->search_type;
+        }
+
+        return $result;
+    }
+
+
+    /**
      * @return ActiveDataProvider
      */
-    public function search(array $params): ActiveDataProvider
+    public function search(): ActiveDataProvider
     {
-        $this->load($params, '');
-
-        $query = $this->getFilteredQuery($params);
+        $query = $this->getFilteredQuery();
 
         $this->queryWithoutServiceFilter = clone $query;
 
@@ -89,22 +184,17 @@ class OrderSearch extends Model
     /**
      * Построение базового запроса с применением фильтров
      *
-     * @param array $params
      * @return ActiveQuery
      */
-    public function getFilteredQuery(array $params): ActiveQuery
+    public function getFilteredQuery(): ActiveQuery
     {
-        if (!$this->load($params, '')) {
-            $this->load($params, '');
-        }
+        $query = Orders::find();
 
-        $query = Order::find();
-
-        if ($this->status !== null && $this->status !== '') {
+        if ($this->status !== null) {
             $query->andWhere(['status' => $this->status]);
         }
 
-        if ($this->mode !== null && $this->mode !== '') {
+        if ($this->mode !== null) {
             $query->andWhere(['mode' => $this->mode]);
         }
 

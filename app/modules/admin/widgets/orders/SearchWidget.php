@@ -2,21 +2,22 @@
 
 namespace app\modules\admin\widgets\orders;
 
+use app\modules\admin\models\Orders;
+use app\modules\admin\models\search\OrdersSearch;
 use Yii;
 use yii\base\Widget;
 use yii\helpers\Html;
-use yii\helpers\ArrayHelper;
 
 class SearchWidget extends Widget
 {
     /**
-     * @var array Параметры запроса
+     * @var OrdersSearch Модель поиска
      */
-    public $params = [];
+    public OrdersSearch $searchModel;
     /**
      * @var string URL для формы поиска
      */
-    public $actionUrl = '/admin/orders';
+    public string $baseRoute = '/admin/orders';
 
     /**
      * @var string Путь к представлению
@@ -28,14 +29,15 @@ class SearchWidget extends Widget
      */
     public function run()
     {
-        $searchValue = $this->params['search'] ?? '';
-        $currentTypeValue = $this->params['search_type'] ?? 'id';
-        $currentStatus = $this->params['status'] ?? null;
+        $searchValue = $this->searchModel->search ?? '';
+        $currentTypeValue = $this->searchModel->search_type ?? 'id';
+        $currentStatus = $this->searchModel->status;
+        $this->baseRoute .= $this->searchModel->status ? '/' . Orders::getStatusUrlKey($this->searchModel->status) : '';
 
         $searchTypes = [
-            'id' => Yii::t('order', 'id_order_name'),
-            'link' => Yii::t('order', 'link_name'),
-            'name' => Yii::t('order', 'username_name')
+            'id' => Yii::t('order', 'table.search.dropdown.order_id.name'),
+            'link' => Yii::t('order', 'table.header.link.name'),
+            'name' => Yii::t('order', 'table.search.dropdown.user.name')
         ];
 
         $optionsHtml = '';
@@ -52,11 +54,11 @@ class SearchWidget extends Widget
         }
 
         return $this->render($this->viewPath, [
-            'actionUrl' => Html::encode($this->actionUrl),
+            'actionUrl' => Html::encode($this->baseRoute),
             'searchValue' => Html::encode($searchValue),
             'optionsHtml' => $optionsHtml,
             'statusInputHtml' => $statusInputHtml,
-            'searchPlaceholder' => Yii::t('order', 'search_orders_name')
+            'searchPlaceholder' => Yii::t('order', 'table.search.placeholder.name')
         ]);
     }
 }
