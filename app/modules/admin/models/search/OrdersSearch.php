@@ -188,6 +188,8 @@ class OrdersSearch extends Model
      */
     public function getFilteredQuery(): ActiveQuery
     {
+        $query = Orders::find();
+
         if ($this->status !== null) {
             $query->andWhere(['status' => $this->status]);
         }
