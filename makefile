@@ -7,9 +7,6 @@ setup:
     	fi
 	docker-compose up -d
 	cd app
-	@if [ ! -f .env ]; then \
-        	  ln -s ../.env .env; \
-    fi
 	docker-compose exec php composer update -d /var/www/html/app
 	docker-compose exec php app/yii migrate
 

@@ -47,7 +47,13 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                'admin/orders' => 'admin/orders/index'
+                'admin/orders/download-csv' => 'admin/orders/download-csv',
+
+                'admin/orders/<status:(pending|in_progress|completed|canceled|fail)>' => 'admin/orders/index',
+
+                'admin/orders' => 'admin/orders/index',
+
+                'admin/orders/<status:.*>' => 'admin/orders/index',
             ],
         ],
     ],
@@ -56,23 +62,25 @@ $config = [
         'admin' => [
             'class' => 'app\modules\admin\Module',
         ],
+        'gii' => [
+            'class' => 'yii\gii\Module',
+        ],
     ],
+
 ];
+
 
 if (YII_ENV_DEV) {
     // configuration adjustments for 'dev' environment
-    $config['bootstrap'][] = 'debug';
-    $config['modules']['debug'] = [
-        'class' => 'yii\debug\Module',
-        // uncomment the following to add your IP if you are not connecting from localhost.
-        //'allowedIPs' => ['127.0.0.1', '::1'],
-    ];
+//    $config['bootstrap'][] = 'debug';
+//    $config['modules']['debug'] = [
+//        'class' => 'yii\debug\Module',
+//    ];
 
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => 'yii\gii\Module',
-        // uncomment the following to add your IP if you are not connecting from localhost.
-        //'allowedIPs' => ['127.0.0.1', '::1'],
+
     ];
 }
 

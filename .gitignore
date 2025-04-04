@@ -1,0 +1,6 @@
+# phpstorm project files
+.idea
+
+app/node_modules
+
+.env

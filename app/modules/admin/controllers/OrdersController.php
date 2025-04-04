@@ -2,16 +2,12 @@
 
 namespace app\modules\admin\controllers;
 
-use app\modules\admin\models\order\Order;
-use app\modules\admin\models\order\OrderSearch;
+use app\modules\admin\models\search\OrdersSearch;
 use app\modules\admin\services\OrdersExportService;
 use app\modules\admin\services\ServiceService;
-use app\modules\admin\services\OrderService;
-use SebastianBergmann\Type\VoidType;
 use Yii;
 use yii\base\ExitException;
 use yii\web\Controller;
-use yii\web\Response;
 
 class OrdersController extends Controller
 {
@@ -27,15 +23,15 @@ class OrdersController extends Controller
 
     public function actionIndex()
     {
-        $searchModel = new OrderSearch();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $searchModel = new OrdersSearch();
+        $searchModel->load(Yii::$app->request->get());
+        $dataProvider = $searchModel->search();
 
         $servicesCount = $this->serviceService->getServicesWithOrderCounts(
-            $searchModel->getFilteredQuery(Yii::$app->request->queryParams)
+            $searchModel->getFilteredQuery()
         );
 
         return $this->render('index', [
-            'params' => Yii::$app->request->getQueryParams(),
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
             'servicesCount' => $servicesCount,
@@ -50,8 +46,8 @@ class OrdersController extends Controller
      */
     public function actionDownloadCsv()
     {
-        $searchModel = new OrderSearch();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $searchModel = new OrdersSearch();
+        $dataProvider = $searchModel->search();
 
         $this->ordersExport->exportToCsv($dataProvider->query);
     }

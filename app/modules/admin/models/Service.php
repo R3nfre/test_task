@@ -1,8 +1,7 @@
 <?php
 
-namespace app\modules\admin\models\service;
+namespace app\modules\admin\models;
 
-use app\modules\admin\models\order\Order;
 use yii\db\ActiveRecord;
 
 class Service extends ActiveRecord
@@ -31,6 +30,6 @@ class Service extends ActiveRecord
 
     public function getOrders()
     {
-        return $this->hasMany(Order::class, ['service_id' => 'id']);
+        return $this->hasMany(Orders::class, ['service_id' => 'id']);
     }
 }

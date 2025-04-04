@@ -2,7 +2,7 @@
 
 namespace app\modules\admin\services;
 
-use app\modules\admin\models\order\Order;
+use app\modules\admin\models\Orders;
 use Yii;
 use yii\db\Query;
 
@@ -110,8 +110,8 @@ class OrdersExportService
                     $order['link'] ?? '',
                     $order['quantity'] ?? '',
                     $order['service_name'] ?? '',
-                    Order::getStatusList()[$order['status']],
-                    Order::getModeList()[$order['mode']],
+                    Orders::getStatusNameList()[$order['status']],
+                    Orders::getModeNameList()[$order['mode']],
                     $formatter->asDatetime($order['created_at'], 'php:Y-m-d H:i:s')
                 ];
 

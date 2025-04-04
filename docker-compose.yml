@@ -7,7 +7,6 @@ services:
     volumes:
       - ./app:/var/www/html/app
       - ./migrations:/var/www/html/migrations
-      - ./.env:/var/www/html/.env
       - ./docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template
     depends_on:
       - php
@@ -39,7 +38,7 @@ services:
       - mysql-data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "${MYSQL_PORT_HOST}:${MYSQL_PORT_CONTAINER}"
+      - "${MYSQL_PORT_HOST}:3306"
     networks:
       - yii2-network
 
