@@ -188,8 +188,6 @@ class OrdersSearch extends Model
      */
     public function getFilteredQuery(): ActiveQuery
     {
-        $query = Orders::find()->with(['user', 'service']);
-
         if ($this->status !== null) {
             $query->andWhere(['status' => $this->status]);
         }
@@ -212,6 +210,10 @@ class OrdersSearch extends Model
      */
     private function applySearchFilter(ActiveQuery $query): void
     {
+        if ($this->search_type === 'name') {
+            $query->joinWith(['user']);
+        }
+
         switch ($this->search_type) {
             case 'id':
                 $query->andWhere(['like', 'orders.id', $this->search]);
