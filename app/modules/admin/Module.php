@@ -22,6 +22,6 @@ class Module extends \yii\base\Module
             'basePath' => '@app/modules/admin/messages',
         ];
 
-        Yii::$app->language = env('YII_LANGUAGE', 'en');
+        Yii::$app->language = getenv('YII_LANGUAGE', 'en');
     }
 }

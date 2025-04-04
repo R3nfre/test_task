@@ -39,7 +39,7 @@ services:
       - mysql-data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "${MYSQL_PORT_HOST}:${MYSQL_PORT_CONTAINER}"
+      - "${MYSQL_PORT_HOST}:3306"
     networks:
       - yii2-network
 
