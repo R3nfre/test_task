@@ -47,6 +47,7 @@ class OrdersController extends Controller
     public function actionDownloadCsv()
     {
         $searchModel = new OrdersSearch();
+        $searchModel->load(Yii::$app->request->get());
         $dataProvider = $searchModel->search();
 
         $this->ordersExport->exportToCsv($dataProvider->query);
