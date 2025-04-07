@@ -9,13 +9,15 @@ use yii\helpers\ArrayHelper;
 class ServiceService
 {
     /**
-     * Получение списка сервисов с количеством заказов для каждого
-     *
-     * @param ActiveQuery $query Запрос для подсчета заказов
-     * @return array Массив с информацией о сервисах и количестве заказов
+     * @param ActiveQuery $query
+     * @return array
      */
     public function getServicesWithOrderCounts(ActiveQuery $query): array
     {
+        $query = clone $query;
+
+        $query->orderBy([]);
+
         $serviceCounts = $query
             ->select(['service_id', 'COUNT(*) AS count'])
             ->groupBy('service_id')

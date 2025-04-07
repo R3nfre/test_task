@@ -28,7 +28,7 @@ class OrdersController extends Controller
         $dataProvider = $searchModel->search();
 
         $servicesCount = $this->serviceService->getServicesWithOrderCounts(
-            $searchModel->getFilteredQuery()
+            $searchModel->getFilteredQueryWithoutServiceFilter()
         );
 
         return $this->render('index', [
@@ -48,8 +48,7 @@ class OrdersController extends Controller
     {
         $searchModel = new OrdersSearch();
         $searchModel->load(Yii::$app->request->get());
-        $dataProvider = $searchModel->search();
 
-        $this->ordersExport->exportToCsv($dataProvider->query);
+        $this->ordersExport->exportToCsv($searchModel);
     }
 }

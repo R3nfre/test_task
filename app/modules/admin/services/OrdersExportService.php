@@ -3,25 +3,31 @@
 namespace app\modules\admin\services;
 
 use app\modules\admin\models\Orders;
+use app\modules\admin\models\search\OrdersSearch;
 use Yii;
 use yii\db\Query;
 
 class OrdersExportService
 {
+    public OrdersSearch $searchModel;
+
     /**
-     * Экспортирует заказы в CSV файл
      *
-     * @param Query|null $query Запрос для выборки заказов
+     * @param OrdersSearch $searchModel
      * @return void
      */
-    public function exportToCsv(Query|null $query): void
+    public function exportToCsv(OrdersSearch $searchModel): void
     {
         $filename = 'orders_' . date('Y-m-d_H-i-s') . '.csv';
 
         try {
+            $this->searchModel = $searchModel;
+
+            $this->searchModel->load(Yii::$app->request->get());
+
             $this->prepareForCsvOutput();
             $this->sendCsvHeaders($filename);
-            $this->writeCsvContent($this->optimizeOrderQuery($query));
+            $this->writeCsvContent($this->optimizeOrderQuery($this->searchModel->getFilteredQuery()));
         } catch (\Exception $e) {
             Yii::error('CSV export error: ' . $e->getMessage(), __METHOD__);
         }
@@ -67,8 +73,10 @@ class OrdersExportService
      */
     private function optimizeOrderQuery(Query $query): Query
     {
-        return $query->select([
+        $query->select([
             'orders.id',
+            'orders.user_id',
+            'orders.service_id',
             'users.first_name',
             'users.last_name',
             'orders.link',
@@ -77,14 +85,17 @@ class OrdersExportService
             'orders.status',
             'orders.mode',
             'orders.created_at'
-        ])
-            ->leftJoin('users', 'orders.user_id = users.id')
-            ->leftJoin('services', 'orders.service_id = services.id');
+        ])->leftJoin('services', 'orders.service_id = services.id');
+
+
+        if($this->searchModel->search_type !== 'name') {
+            $query->leftJoin('users', 'orders.user_id = users.id');
+        }
+
+        return $query;
     }
 
     /**
-     * Записывает содержимое CSV
-     *
      * @param Query $query
      */
     private function writeCsvContent(Query $query): void
@@ -95,41 +106,37 @@ class OrdersExportService
         $csvLine = '"' . implode('","', $headers) . '"' . "\n";
         echo $csvLine;
 
-//        ob_flush();
         flush();
 
         $formatter = Yii::$app->formatter;
 
-        foreach ($query->batch() as $orders) {
-            $batchOutput = '';
+        $limit = 100;
+        $offset = 0;
 
+        while ($orders = $query->limit($limit)->offset($offset)->all()) {
             foreach ($orders as $order) {
                 $row = [
-                    $order['id'],
-                    ($order['first_name'] ?? '') . ' ' . ($order['last_name'] ?? ''),
-                    $order['link'] ?? '',
-                    $order['quantity'] ?? '',
-                    $order['service_name'] ?? '',
-                    Orders::getStatusNameList()[$order['status']],
-                    Orders::getModeNameList()[$order['mode']],
-                    $formatter->asDatetime($order['created_at'], 'php:Y-m-d H:i:s')
+                    $order->id,
+                    ($order->user->first_name ?? '') . ' ' . ($order->user->last_name ?? ''),
+                    $order->link ?? '',
+                    $order->quantity ?? '',
+                    $order->service->name ?? '',
+                    Orders::getStatusNameList()[$order->status],
+                    Orders::getModeNameList()[$order->mode],
+                    $formatter->asDatetime($order->created_at, 'php:Y-m-d H:i:s')
                 ];
 
-                // Экранируем и форматируем строку CSV
                 $escapedRow = array_map([$this, 'escapeCsvField'], $row);
-                $batchOutput .= '"' . implode('","', $escapedRow) . '"' . "\n";
+                echo '"' . implode('","', $escapedRow) . '"' . "\n";
             }
 
-            echo $batchOutput;
-
-//            ob_flush();
             flush();
 
-            unset($orders, $batchOutput);
+            $offset += $limit;
+
+            unset($orders);
             gc_collect_cycles();
         }
-
-//        ob_end_flush();
     }
 
     /**

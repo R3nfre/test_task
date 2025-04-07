@@ -15,15 +15,17 @@ class OrdersSearch extends Model
      */
     const PAGE_SIZE = 100;
 
-    /**
-     * @var string Статус заказа
-     */
     public $mode;
     public $service_id;
     public $search;
     public $search_type;
     public $status;
     private $queryWithoutServiceFilter;
+
+    /**
+     * @var ActiveQuery Базовый запрос
+     */
+    private $query;
 
     /**
      * {@inheritdoc}
@@ -156,22 +158,19 @@ class OrdersSearch extends Model
         return $result;
     }
 
-
     /**
      * @return ActiveDataProvider
      */
     public function search(): ActiveDataProvider
     {
-        $query = $this->getFilteredQuery();
+        $this->buildQuery();
 
-        $this->queryWithoutServiceFilter = clone $query;
+        $this->queryWithoutServiceFilter = clone $this->query;
 
-        if ($this->service_id !== null) {
-            $query->andWhere(['service_id' => $this->service_id]);
-        }
+        $this->applyServiceFilter();
 
         return new ActiveDataProvider([
-            'query' => $query,
+            'query' => $this->query,
             'pagination' => [
                 'pageSize' => self::PAGE_SIZE,
             ],
@@ -186,58 +185,85 @@ class OrdersSearch extends Model
      *
      * @return ActiveQuery
      */
-    public function getFilteredQuery(): ActiveQuery
+    public function buildQuery(): ActiveQuery
     {
-        $query = Orders::find();
+        $this->query = Orders::find();
 
-        if ($this->status !== null) {
-            $query->andWhere(['status' => $this->status]);
-        }
+        $this->applyStatusFilter();
+        $this->applyModeFilter();
+        $this->applySearchFilter();
 
-        if ($this->mode !== null) {
-            $query->andWhere(['mode' => $this->mode]);
-        }
-
-        if (!empty($this->search)) {
-            $this->applySearchFilter($query);
-        }
-
-        return $query;
+        return $this->query;
     }
 
-    /**
-     * Применение поискового фильтра к запросу
-     *
-     * @param ActiveQuery $query
-     */
-    private function applySearchFilter(ActiveQuery $query): void
+    protected function applyStatusFilter(): void
     {
+        if ($this->status !== null) {
+            $this->query->andWhere(['status' => $this->status]);
+        }
+    }
+
+    protected function applyModeFilter(): void
+    {
+        if ($this->mode !== null) {
+            $this->query->andWhere(['mode' => $this->mode]);
+        }
+    }
+
+    protected function applyServiceFilter(): void
+    {
+        if ($this->service_id !== null) {
+            $this->query->andWhere(['service_id' => $this->service_id]);
+        }
+    }
+
+    protected function applySearchFilter(): void
+    {
+        if (empty($this->search) || empty($this->search_type)) {
+            return;
+        }
+
         if ($this->search_type === 'name') {
-            $query->joinWith(['user']);
+            $this->query->joinWith(['user']);
         }
 
         switch ($this->search_type) {
             case 'id':
-                $query->andWhere(['like', 'orders.id', $this->search]);
+                $this->applyIdSearchFilter();
                 break;
 
             case 'name':
-                $this->applyNameSearchFilter($query);
+                $this->applyNameSearchFilter();
                 break;
 
             case 'link':
-                $query->andWhere(['like', 'orders.link', $this->search]);
+                $this->applyLinkSearchFilter();
                 break;
         }
+    }
+
+    /**
+     * Применяет фильтр поиска по ID
+     */
+    protected function applyIdSearchFilter(): void
+    {
+        $this->query->andWhere(['like', 'orders.id', $this->search]);
+    }
+
+    /**
+     * Применяет фильтр поиска по ссылке
+     */
+    protected function applyLinkSearchFilter(): void
+    {
+        $this->query->andWhere(['like', 'orders.link', $this->search]);
     }
 
     /**
      * Применяет фильтр поиска по имени фамилии пользователя
      *
-     * @param ActiveQuery $query
      * @return void
      */
-    private function applyNameSearchFilter(ActiveQuery $query): void
+    protected function applyNameSearchFilter(): void
     {
         $search = trim($this->search);
         $parts = preg_split('/\s+/', $search);
@@ -246,7 +272,7 @@ class OrdersSearch extends Model
             $firstName = array_shift($parts);
             $lastName = implode(' ', $parts);
 
-            $query->andWhere([
+            $this->query->andWhere([
                 'or',
                 ['and',
                     ['like', 'users.first_name', $firstName . '%', false],
@@ -260,12 +286,32 @@ class OrdersSearch extends Model
                 ['like', 'CONCAT(users.last_name, " ", users.first_name)', $search]
             ]);
         } else {
-            $query->andWhere([
+            $this->query->andWhere([
                 'or',
                 ['like', 'users.first_name', $search . '%', false],
                 ['like', 'users.last_name', $search . '%', false]
             ]);
         }
+    }
+
+    /**
+     * @return ActiveQuery
+     */
+    public function getFilteredQuery(): ActiveQuery
+    {
+        if ($this->query === null) {
+            $this->buildQuery();
+        }
+
+        return $this->query;
+    }
+
+    /**
+     * @return ActiveQuery
+     */
+    public function getFilteredQueryWithoutServiceFilter(): ActiveQuery
+    {
+        return $this->queryWithoutServiceFilter;
     }
 
     /**
